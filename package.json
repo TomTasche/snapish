@@ -1,0 +1,15 @@
+{
+  "name": "building-blocks-web",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "standard"
+  },
+  "devDependencies": {
+    "standard": "^10.0.2"
+  },
+  "dependencies": {
+    "express": "^4.15.2",
+    "material-components-web": "^0.9.1",
+    "moment": "^2.18.1"
+  }
+}

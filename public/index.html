@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <title>
+    snapish.it
+  </title>
+
+  <link href="material-components-web.min.css" rel="stylesheet">
+
+  <link href="video-js.css" rel="stylesheet">
+
+  <link href="snack-component.css" rel="stylesheet"></link>
+
+  <link href="index.css" rel="stylesheet">
+</head>
+
+<body class="mdc-typography">
+  <h1 class="mdc-typography--headline">
+    snapish.it
+  </h1>
+
+  <video id="snappy-video" class="video-js" width="640" height="264">
+    <p class="vjs-no-js">
+      To view this video please enable JavaScript, and consider upgrading to a web browser that
+      <a href="http://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>
+    </p>
+  </video>
+
+  <div id="snackbar" class="mdc-snackbar">
+    <div class="mdc-snackbar__text"></div>
+    <div class="mdc-snackbar__action-wrapper">
+      <button type="button" class="mdc-button mdc-snackbar__action-button"></button>
+    </div>
+  </div>
+
+  <script src="material-components-web.min.js"></script>
+  <script src="moment.min.js"></script>
+
+  <script src="video.js"></script>
+
+  <script src="server-bridge.js"></script>
+
+  <script src="snack-component.js"></script>
+
+  <script src="index.js"></script>
+</body>
+
+</html>

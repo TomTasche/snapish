@@ -1,38 +1,114 @@
 (function () {
   // redeclare dependencies to avoid linter-warnings
   var mdc = window.mdc
-  var Moment = window.moment
+  var videojs = window.videojs
 
   var ServerBridge = window.ServerBridge
 
   var SnackComponent = window.SnackComponent
+
+  var mouseDownTimestamp
+
+  var playlist
+  var currentPlaylistIndex
+  var player
 
   function initialize () {
     mdc.autoInit()
 
     SnackComponent.initialize()
 
-    var playlist = ['big_buck_bunny.mp4', 'echo-hereweare.mp4']
-    var currentVideo = -1
+    var facebookLoginButton = document.querySelector('#facebook-login-button')
+    facebookLoginButton.addEventListener('click', function () {
+      window.location.href = '/facebook/login'
+    })
 
-    var player = videojs('snappy-video')
+    var snappyButton = document.querySelector('#snappy-button')
+    snappyButton.addEventListener('click', fetchPlaylist)
 
-    function loadNextVideo () {
-      currentVideo++
+    var isLoggedIn = window.location.hash === '#facebook-logged-in'
+    facebookLoginButton.disabled = isLoggedIn
+    snappyButton.disabled = !isLoggedIn
 
-      var newVideo = playlist[currentVideo]
-      player.src(newVideo)
-      player.play()
-    }
+    initializeVideo()
+  }
+
+  function fetchPlaylist () {
+    playlist = []
+
+    currentPlaylistIndex = 0
+
+    // has to be called in context of user-interaction
+    player.requestFullscreen()
+
+    var promise = ServerBridge.fetchFacebookFeed()
+    promise.then(function (feed) {
+      for (var i = 0; i < feed.length; i++) {
+        var post = feed[i]
+
+        var videoUrl = post.source
+        playlist.push(videoUrl)
+      }
+
+      loadVideo()
+    })
+  }
+
+  function initializeVideo () {
+    player = videojs('snappy-video')
 
     player.controls(false)
     player.preload(true)
-    player.on('ended', loadNextVideo)
-    player.on('click', function () {
-      player.currentTime(player.currentTime() + 5)
-    })
+    player.on('ended', onVideoEnded)
+    player.on('mousedown', function () {
+      mouseDownTimestamp = new Date().getTime()
 
-    loadNextVideo()
+      player.pause()
+    })
+    player.on('mouseup', function () {
+      var nowTimestamp = new Date().getTime()
+
+      var timestampDifference = nowTimestamp - mouseDownTimestamp
+      if (timestampDifference < 1 * 1000) {
+        var newTime = player.currentTime() + 5
+        if (newTime >= player.duration()) {
+          onVideoEnded()
+
+          return
+        }
+
+        player.currentTime(newTime)
+      }
+
+      player.play()
+    })
+  }
+
+  function loadVideo () {
+    var video = playlist[currentPlaylistIndex]
+
+    var type
+    if (video.indexOf('m3u8') > 0) {
+      type = 'application/x-mpegURL'
+    }
+
+    player.src({
+      type: type,
+      src: video
+    })
+    player.play()
+  }
+
+  function onVideoEnded () {
+    currentPlaylistIndex++
+
+    if (currentPlaylistIndex === playlist.length) {
+      player.exitFullscreen()
+
+      return
+    }
+
+    loadVideo()
   }
 
   initialize()

@@ -1,8 +1,11 @@
 (function () {
   var fetch = window.fetch
 
-  function fetchTime () {
-    var promise = fetch('/time')
+  function fetchFacebookFeed () {
+    var options = {}
+    options.credentials = 'same-origin'
+
+    var promise = fetch('/facebook/feed', options)
     promise = promise.then(function (response) {
       if (!response.ok) {
         throw new Error('request failed')
@@ -15,7 +18,7 @@
   }
 
   var bridge = {}
-  bridge.fetchTime = fetchTime
+  bridge.fetchFacebookFeed = fetchFacebookFeed
 
   window.ServerBridge = bridge
 })()

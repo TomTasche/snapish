@@ -28,7 +28,7 @@
 
     var isLoggedIn = window.location.hash === '#facebook-logged-in'
     facebookLoginButton.disabled = isLoggedIn
-    facebookLoginButton.disabled = !isLoggedIn
+    facebookFeedButton.disabled = !isLoggedIn
 
     initializeVideo()
   }

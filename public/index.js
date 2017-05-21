@@ -7,7 +7,7 @@
 
   var SnackComponent = window.SnackComponent
 
-  var mouseDownTimestamp
+  var interactionStartedTimestap
 
   var playlist
   var currentPlaylistIndex
@@ -57,6 +57,11 @@
       facebookFeedButton.disabled = true
       snappyButton.disabled = false
     })
+    promise.catch(function () {
+      // facebook login probably expired - reload page without "logged-in"-hash
+      window.location.hash = ''
+      window.location.href = '/'
+    })
   }
 
   function initializeVideo () {
@@ -65,28 +70,34 @@
     player.controls(false)
     player.preload(true)
     player.on('ended', onVideoEnded)
-    player.on('mousedown', function () {
-      mouseDownTimestamp = new Date().getTime()
+    player.on('mousedown', onInteractionStarted)
+    player.on('mouseup', onInteractionEnded)
+    player.on('touchstart', onInteractionStarted)
+    player.on('touchend', onInteractionEnded)
+  }
 
-      player.pause()
-    })
-    player.on('mouseup', function () {
-      var nowTimestamp = new Date().getTime()
+  function onInteractionStarted () {
+    interactionStartedTimestap = new Date().getTime()
 
-      var timestampDifference = nowTimestamp - mouseDownTimestamp
-      if (timestampDifference < 1 * 1000) {
-        var newTime = player.currentTime() + 5
-        if (newTime >= player.duration()) {
-          onVideoEnded()
+    player.pause()
+  }
 
-          return
-        }
+  function onInteractionEnded () {
+    var nowTimestamp = new Date().getTime()
 
-        player.currentTime(newTime)
+    var timestampDifference = nowTimestamp - interactionStartedTimestap
+    if (timestampDifference < 1 * 1000) {
+      var newTime = player.currentTime() + 5
+      if (newTime >= player.duration()) {
+        onVideoEnded()
+
+        return
       }
 
-      player.play()
-    })
+      player.currentTime(newTime)
+    }
+
+    player.play()
   }
 
   function loadVideo () {

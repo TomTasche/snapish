@@ -8,7 +8,16 @@ var Session = require('express-session')
 var Facebook = require('fb')
 
 var PORT = process.env.PORT || 8080
+var PROTOCOL = process.env.PROTOCOL || 'http'
 var HOST = process.env.HOST || 'localhost'
+
+var FACEBOOK_CLIENT_ID = process.env.FACEBOOK_CLIENT_ID
+var FACEBOOK_CLIENT_SECRET = process.env.FACEBOOK_CLIENT_SECRET
+
+Facebook.options({
+  appId: FACEBOOK_CLIENT_ID,
+  appSecret: FACEBOOK_CLIENT_SECRET
+})
 
 function initializeServer () {
   let app = Express()
@@ -35,8 +44,6 @@ function onFacebookLoginRequest (request, response) {
   let accessCode = urlObject.query.code
   if (!accessCode) {
     let loginUrl = Facebook.getLoginUrl({
-      client_id: '432576567116772',
-      client_secret: '79956649d248e3fcb37e961f22732780',
       redirect_uri: getRedirectUrl(request)
     })
 
@@ -46,23 +53,16 @@ function onFacebookLoginRequest (request, response) {
     response.writeHead(302, responseHeaders)
     response.end()
   } else {
+    // we have to explicitly pass the client credentials here for some reason
     let options = {
-      client_id: '432576567116772',
-      client_secret: '79956649d248e3fcb37e961f22732780',
+      client_id: FACEBOOK_CLIENT_ID,
+      client_secret: FACEBOOK_CLIENT_SECRET,
       redirect_uri: getRedirectUrl(request),
       code: accessCode
     }
 
-    Facebook.api('oauth/access_token', options, function (facebookResponse) {
-      if (!facebookResponse || facebookResponse.error) {
-        console.log(!facebookResponse ? 'error occurred' : facebookResponse.error)
-
-        response.statusCode = 500
-        response.end()
-
-        return
-      }
-
+    var promise = Facebook.api('oauth/access_token', options)
+    promise.then(function (facebookResponse) {
       var accessToken = facebookResponse.access_token
       request.session.facebookAccessToken = accessToken
 
@@ -70,6 +70,12 @@ function onFacebookLoginRequest (request, response) {
       responseHeaders['Location'] = '/#facebook-logged-in'
 
       response.writeHead(302, responseHeaders)
+      response.end()
+    })
+    promise.catch(function (error) {
+      console.error(error)
+
+      response.statusCode = 500
       response.end()
     })
   }
@@ -81,16 +87,8 @@ function onFacebookFeedRequest (request, response) {
     access_token: request.session.facebookAccessToken
   }
 
-  Facebook.api('/DAZNDE/posts', options, function (facebookResponse) {
-    if (!facebookResponse || facebookResponse.error) {
-      console.log(!facebookResponse ? 'error occurred' : facebookResponse.error)
-
-      response.statusCode = 500
-      response.end()
-
-      return
-    }
-
+  var promise = Facebook.api('/DAZNDE/posts', options)
+  promise.then(function (facebookResponse) {
     let responseArray = []
 
     for (let post of facebookResponse.data) {
@@ -103,10 +101,16 @@ function onFacebookFeedRequest (request, response) {
 
     response.end(JSON.stringify(responseArray))
   })
+  promise.catch(function (error) {
+    console.error(error)
+
+    response.statusCode = 500
+    response.end()
+  })
 }
 
 function getRedirectUrl (request) {
-  let url = 'http://' + HOST + ':' + PORT + '/facebook/login'
+  let url = PROTOCOL + '://' + HOST + ':' + PORT + '/facebook/login'
   url += '?session=' + request.session.id
 
   return url

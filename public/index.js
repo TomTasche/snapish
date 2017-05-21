@@ -13,22 +13,30 @@
   var currentPlaylistIndex
   var player
 
+  var facebookLoginButton
+  var facebookFeedButton
+  var snappyButton
+
   function initialize () {
     mdc.autoInit()
 
     SnackComponent.initialize()
 
-    var facebookLoginButton = document.querySelector('#facebook-login-button')
+    facebookLoginButton = document.querySelector('#facebook-login-button')
     facebookLoginButton.addEventListener('click', function () {
       window.location.href = '/facebook/login'
     })
 
-    var facebookFeedButton = document.querySelector('#facebook-feed-button')
+    facebookFeedButton = document.querySelector('#facebook-feed-button')
     facebookFeedButton.addEventListener('click', fetchPlaylist)
+
+    snappyButton = document.querySelector('#snappy-button')
+    snappyButton.addEventListener('click', loadVideo)
 
     var isLoggedIn = window.location.hash === '#facebook-logged-in'
     facebookLoginButton.disabled = isLoggedIn
     facebookFeedButton.disabled = !isLoggedIn
+    snappyButton.disabled = !isLoggedIn
 
     initializeVideo()
   }
@@ -47,8 +55,7 @@
         playlist.push(videoUrl)
       }
 
-      var snappyButton = document.querySelector('#snappy-button')
-      snappyButton.addEventListener('click', loadVideo)
+      facebookFeedButton.disabled = true
       snappyButton.disabled = false
     })
   }
@@ -86,7 +93,7 @@
   function loadVideo () {
     var video = playlist[currentPlaylistIndex]
 
-    if (!player.isFullscreen) {
+    if (!player.isFullscreen()) {
       player.requestFullscreen()
     }
 

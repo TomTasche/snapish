@@ -8,6 +8,7 @@ var Session = require('express-session')
 var Facebook = require('fb')
 
 var PORT = process.env.PORT || 8080
+var PUBLIC_PORT = process.env.PUBLIC_PORT
 var PROTOCOL = process.env.PROTOCOL || 'http'
 var HOST = process.env.HOST || 'localhost'
 
@@ -110,7 +111,11 @@ function onFacebookFeedRequest (request, response) {
 }
 
 function getRedirectUrl (request) {
-  let url = PROTOCOL + '://' + HOST + ':' + PORT + '/facebook/login'
+  let url = PROTOCOL + '://' + HOST
+  if (PUBLIC_PORT) {
+    url += ':' + PUBLIC_PORT
+  }
+  url += '/facebook/login'
   url += '?session=' + request.session.id
 
   return url

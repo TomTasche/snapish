@@ -37,6 +37,14 @@
     facebookLoginButton.disabled = isLoggedIn
     facebookFeedButton.disabled = !isLoggedIn
 
+    // disable long-press menu (otherwise pausing doesnt work on mobile)
+    // http://stackoverflow.com/a/28748222/198996
+    window.oncontextmenu = function (event) {
+      event.preventDefault()
+      event.stopPropagation()
+      return false
+    }
+
     initializeVideo()
   }
 

@@ -23,12 +23,12 @@
       window.location.href = '/facebook/login'
     })
 
-    var snappyButton = document.querySelector('#snappy-button')
-    snappyButton.addEventListener('click', fetchPlaylist)
+    var facebookFeedButton = document.querySelector('#facebook-feed-button')
+    facebookFeedButton.addEventListener('click', fetchPlaylist)
 
     var isLoggedIn = window.location.hash === '#facebook-logged-in'
     facebookLoginButton.disabled = isLoggedIn
-    snappyButton.disabled = !isLoggedIn
+    facebookLoginButton.disabled = !isLoggedIn
 
     initializeVideo()
   }
@@ -37,9 +37,6 @@
     playlist = []
 
     currentPlaylistIndex = 0
-
-    // has to be called in context of user-interaction
-    player.requestFullscreen()
 
     var promise = ServerBridge.fetchFacebookFeed()
     promise.then(function (feed) {
@@ -50,7 +47,9 @@
         playlist.push(videoUrl)
       }
 
-      loadVideo()
+      var snappyButton = document.querySelector('#snappy-button')
+      snappyButton.addEventListener('click', loadVideo)
+      snappyButton.disabled = false
     })
   }
 
@@ -86,6 +85,10 @@
 
   function loadVideo () {
     var video = playlist[currentPlaylistIndex]
+
+    if (!player.isFullscreen) {
+      player.requestFullscreen()
+    }
 
     var type
     if (video.indexOf('m3u8') > 0) {

@@ -12,6 +12,7 @@
     "express-session": "^1.15.3",
     "fb": "^2.0.0",
     "material-components-web": "^0.9.1",
-    "moment": "^2.18.1"
+    "moment": "^2.18.1",
+    "node-twitter-api": "^1.8.0"
   }
 }

@@ -14,7 +14,8 @@
   var player
 
   var facebookLoginButton
-  var facebookFeedButton
+  var twitterLoginButton
+  var feedButton
   var snappyButton
 
   function initialize () {
@@ -27,15 +28,24 @@
       window.location.href = '/facebook/login'
     })
 
-    facebookFeedButton = document.querySelector('#facebook-feed-button')
-    facebookFeedButton.addEventListener('click', fetchPlaylist)
+    twitterLoginButton = document.querySelector('#twitter-login-button')
+    twitterLoginButton.addEventListener('click', function () {
+      window.location.href = '/twitter/login'
+    })
+
+    feedButton = document.querySelector('#download-feed-button')
+    feedButton.addEventListener('click', fetchPlaylist)
 
     snappyButton = document.querySelector('#snappy-button')
     snappyButton.addEventListener('click', loadVideo)
 
-    var isLoggedIn = window.location.hash === '#facebook-logged-in'
-    facebookLoginButton.disabled = isLoggedIn
-    facebookFeedButton.disabled = !isLoggedIn
+    var currentHash = window.location.hash
+    var isFacebookLoggedIn = currentHash === '#facebook-logged-in'
+    var isTwitterLoggedIn = currentHash === '#twitter-logged-in'
+
+    facebookLoginButton.disabled = isFacebookLoggedIn
+    twitterLoginButton.disabled = isTwitterLoggedIn
+    feedButton.disabled = !(isFacebookLoggedIn || isTwitterLoggedIn)
 
     // disable long-press menu (otherwise pausing doesnt work on mobile)
     // http://stackoverflow.com/a/28748222/198996
@@ -53,18 +63,52 @@
 
     currentPlaylistIndex = 0
 
-    var promise = ServerBridge.fetchFacebookFeed()
-    promise.then(function (feed) {
-      for (var i = 0; i < feed.length; i++) {
-        var post = feed[i]
+    var currentHash = window.location.hash
 
-        var videoUrl = post.source
-        playlist.push(videoUrl)
-      }
+    var promise
+    if (currentHash === '#facebook-logged-in') {
+      promise = ServerBridge.fetchFacebookFeed()
+      promise.then(function (feed) {
+        for (var i = 0; i < feed.length; i++) {
+          var post = feed[i]
 
-      facebookFeedButton.disabled = true
-      snappyButton.disabled = false
-    })
+          var videoUrl = post.source
+          playlist.push(videoUrl)
+        }
+
+        feedButton.disabled = true
+        snappyButton.disabled = false
+      })
+    } else if (currentHash === '#twitter-logged-in') {
+      promise = ServerBridge.fetchTwitterFeed()
+      promise.then(function (feed) {
+        for (var postIndex = 0; postIndex < feed.length; postIndex++) {
+          var post = feed[postIndex]
+
+          var entities = post['extended_entities']
+          if (!entities) {
+            continue
+          }
+
+          for (var mediaIndex = 0; mediaIndex < entities.media.length; mediaIndex++) {
+            var media = entities.media[mediaIndex]
+            if (media.type === 'video') {
+              var variants = media['video_info']['variants']
+
+              // last one is usually a .m3u8
+              var videoUrl = variants[variants.length - 1].url
+              playlist.push(videoUrl)
+            }
+          }
+        }
+
+        feedButton.disabled = true
+        snappyButton.disabled = false
+      })
+    } else {
+      console.error('what?')
+    }
+
     promise.catch(function () {
       // facebook login probably expired - reload page without "logged-in"-hash
       window.location.hash = ''
